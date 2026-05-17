@@ -23,6 +23,8 @@ Simulation::Rectangle::Rectangle(float width, float height,float x,float y,float
 
 void Simulation::Rectangle::Tick()
 {
+	this->actorShape->setScale(sf::Vector2(this->scale, this->scale));
+
 	this->actorShape->setPosition({ this->posX + this->speedX, this->posY + this->speedY });
 
 	this->posX = this->actorShape->getPosition().x;
@@ -31,8 +33,8 @@ void Simulation::Rectangle::Tick()
 	sf::FloatRect bounds = this->actorText->getLocalBounds();
 
 	actorText->setPosition({
-		this->posX + (this->width / 2.0f) - (bounds.position.x + bounds.size.x / 2.0f),
-		this->posY + (this->height / 2.0f) - (bounds.position.y + bounds.size.y / 2.0f)
+		this->posX + (this->width * this->scale / 2.0f) - (bounds.position.x + bounds.size.x / 2.0f),
+		this->posY + (this->height * this->scale / 2.0f) - (bounds.position.y + bounds.size.y / 2.0f)
 		});
 
 	this->actorShape->setFillColor(*this->fillColor);
@@ -42,6 +44,8 @@ void Simulation::Rectangle::Tick()
 
 void Simulation::Rectangle::Draw(sf::RenderWindow& window)
 {
+	if (!draw)
+		return;
 	window.draw(*this->actorShape);
 
 	window.draw(*this->actorText);
@@ -52,11 +56,11 @@ void Simulation::Rectangle::Draw(sf::RenderWindow& window)
 
 void Simulation::Rectangle::CheckCollision()
 {
-	if (this->posX + this->width >= lastScreenWidth || this->posX <= 0)
+	if (this->posX + this->width* this->scale >= lastScreenWidth || this->posX <= 0)
 	{
 		this->speedX *= -1;
 	}
-	if (this->posY + this->height >= lastScreenHeight || this->posY <= 0)
+	if (this->posY + this->height* this->scale >= lastScreenHeight || this->posY <= 0)
 	{
 		this->speedY *= -1;
 	}

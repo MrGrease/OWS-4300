@@ -52,12 +52,15 @@ int main() {
 
     // let's make a shape that we will draw to the screen
     float circleRadius = 50; // radius to draw the circle
+    float shapeScale = 1;
     int circleSegmentsGlobal = 32; // number of segments to draw the circle with
     float circleSpeedX = 1.0f; // we will use this to move the circle later
     float circleSpeedY = 0.5f; // you will read these values from the file
+    float speedx = 1;
+    float speedy = 1;
     bool drawCircle = true; //whether or not to draw the circle
     bool drawText = true; //whether or not to draw the text
-
+    bool drawShape = true; //whether or not to draw the shape
     // create the sfml circle shape based on our parameters
     //sf::CircleShape circle(circleRadius, circleSegmentsGlobal);//create the circle shape
     //circle.setPosition({ 10.0f, 10.0f });
@@ -86,18 +89,20 @@ int main() {
 
     text.setPosition({ 0, wHeight - (float)text.getCharacterSize() });
 
-    char displayString[255] = "Sample Text";
+    char displayString[255] = "";
 
 
     //Generate All shapes
     std::vector<Simulation::ShapeActor*> actors;
 
+    std::vector<std::string> actorRegister;
 
     for (int i = 0; i<conf->GetCircleConfigLength();i++)
     {
         ConfigCircle tempConfig = conf->GetCircleConfig(i);
         Simulation::Circle* tempCircle = new Simulation::Circle(circleSegmentsGlobal, tempConfig.radius,tempConfig.xpos, tempConfig.ypos, tempConfig.xspeed, tempConfig.yspeed, tempConfig.r, tempConfig.g, tempConfig.b, tempConfig.name,myFont, fontConf.size);
         actors.push_back(tempCircle);
+        actorRegister.push_back(tempConfig.name);
     }
 
     for (int i = 0; i<conf->GetRectangleConfigLength(); i++)
@@ -105,8 +110,21 @@ int main() {
         ConfigRectangle tempConfig = conf->GetRectangleConfig(i);
         Simulation::Rectangle* tempRect = new Simulation::Rectangle(tempConfig.width, tempConfig.height, tempConfig.xpos, tempConfig.ypos, tempConfig.xspeed, tempConfig.yspeed, tempConfig.r, tempConfig.g, tempConfig.b, tempConfig.name, myFont, fontConf.size);
         actors.push_back(tempRect);
+        actorRegister.push_back(tempConfig.name);
     }
     
+    static int currentItem = 0;
+
+    drawShape = actors[0]->GetDraw();
+    shapeScale = actors[0]->GetScale();
+    speedx = actors[0]->GetSpeedX();
+    speedy = actors[0]->GetSpeedY();
+    //displayString = actors[i]->GetActorText()->getString().toAnsiString().c_str();//TODO GET STRING
+    memset(displayString, 0, sizeof(displayString));
+    for (int j = 0; j < actors[0]->GetActorText()->getString().getSize(); j++)
+    {
+        displayString[j] = actors[0]->GetActorText()->getString().getData()[j];
+    }
 
     while (window.isOpen()) {
 
@@ -132,16 +150,74 @@ int main() {
         // update imgui for this frame with the time that the last frame took
         ImGui::SFML::Update(window, deltaClock.restart());
 
-        ImGui::Begin("Window title!");
-        ImGui::Text("Window text!");
-        ImGui::Checkbox("Draw Circle", &drawCircle);
+        ImGui::Begin("Shape Properties");
+
+        const char* preview = actorRegister[currentItem].c_str();
+
+        if (ImGui::BeginCombo("Shape", preview))
+        {
+            for (int i = 0; i < actorRegister.size(); i++)
+            {
+                bool isSelected = (currentItem == i);
+
+                if (ImGui::Selectable(actorRegister[i].c_str(), isSelected))
+                {
+                    currentItem = i;
+                    drawShape = actors[i]->GetDraw();
+                    shapeScale = actors[i]->GetScale();
+                    speedx = actors[i]->GetSpeedX();
+                    speedy = actors[i]->GetSpeedY();
+                    //displayString = actors[i]->GetActorText()->getString().toAnsiString().c_str();//TODO GET STRING
+                    memset(displayString, 0, sizeof(displayString));
+                    for (int j = 0; j < actors[i]->GetActorText()->getString().getSize(); j++)
+                    {
+                        displayString[j] = actors[i]->GetActorText()->getString().getData()[j];
+                    }
+                }
+
+                if (isSelected)
+                {
+                    ImGui::SetItemDefaultFocus();
+
+                }
+            }
+            ImGui::EndCombo();
+        }
+        if(ImGui::Checkbox("Draw Shape", &drawShape))
+        {
+            actors[currentItem]->SetDraw(drawShape);
+        }
+        
+        //ImGui::Checkbox("Draw Circle", &drawCircle);
+        //ImGui::SameLine();
+        //ImGui::Checkbox("DrawText", &drawText);
+        if(ImGui::SliderFloat("Scale", &shapeScale, 0.1f, 300.0f))
+        {
+            actors[currentItem]->SetScale(shapeScale);
+        }
+        //ImGui::SliderFloat("Radius", &circleRadius, 0.0f, 300.0f);
+        ImGui::SetNextItemWidth(120.0f);
+        if (ImGui::SliderFloat("##", &speedx, 0.1f, 10.0f))
+        {
+            actors[currentItem]->SetSpeedX(speedx);
+        }
         ImGui::SameLine();
-        ImGui::Checkbox("DrawText", &drawText);
-        ImGui::SliderFloat("Radius", &circleRadius, 0.0f, 300.0f);
-        ImGui::SliderInt("Sides", &circleSegmentsGlobal, 3, 64);
-        ImGui::ColorEdit3("Color circle", c);
-        ImGui::InputText("Text", displayString, 255);
-        if (ImGui::Button("Set Text"))
+        ImGui::SetNextItemWidth(120.0f);
+        if (ImGui::SliderFloat("Velocity", &speedy, 0.1f, 10.0f))
+        {
+            actors[currentItem]->SetSpeedY(speedy);
+        }
+        //ImGui::SliderInt("Sides", &speedx, 3, 64);
+        if (ImGui::ColorEdit3("Color", c))
+        {
+            actors[currentItem]->SetFillColor(c[0],c[1],c[2]);
+        }
+        if (ImGui::InputText("Name", displayString, 255))
+        {
+            actors[currentItem]->SetActorText(displayString);
+        }
+
+        /*if (ImGui::Button("Set Text"))
         {
             text.setString(displayString);
         }
@@ -149,7 +225,7 @@ int main() {
         if (ImGui::Button("Reset Circle"))
         {
             //circle.setPosition({ 0,0 });
-        }
+        }*/
         ImGui::End();
 
         //set the circle properties, because they may have been updated with the ui

@@ -24,6 +24,8 @@ Simulation::Circle::Circle(int segments, float radius, float x, float y, float s
 
 void Simulation::Circle::Tick()
 {
+	this->actorShape->setScale(sf::Vector2(this->scale, this->scale));
+
 	this->actorShape->setPosition({ this->posX + this->speedX, this->posY + this->speedY });
 
 	this->posX = this->actorShape->getPosition().x;
@@ -32,8 +34,8 @@ void Simulation::Circle::Tick()
 	sf::FloatRect bounds = actorText->getLocalBounds();
 
 	actorText->setPosition({
-	(this->posX + this->radius) - (bounds.position.x + bounds.size.x / 2.0f),
-	(this->posY + this->radius) - (bounds.position.y + bounds.size.y / 2.0f)
+	(this->posX + this->radius* this->scale) - (bounds.position.x + bounds.size.x / 2.0f),
+	(this->posY + this->radius* this->scale) - (bounds.position.y + bounds.size.y / 2.0f)
 		});
 
 	this->actorShape->setFillColor(*this->fillColor);	
@@ -43,6 +45,8 @@ void Simulation::Circle::Tick()
 
 void Simulation::Circle::Draw(sf::RenderWindow& window)
 {
+	if (!draw)
+		return;
 	window.draw(*this->actorShape);
 
 	window.draw(*this->actorText);
@@ -53,11 +57,11 @@ void Simulation::Circle::Draw(sf::RenderWindow& window)
 
 void Simulation::Circle::CheckCollision()
 {
-	if (this->posX + this->radius*2 >= lastScreenWidth || this->posX <= 0)
+	if (this->posX + (this->radius*2* this->scale) >= lastScreenWidth || this->posX <= 0)
 	{
 		this->speedX *= -1;
 	}
-	if (this->posY + this->radius * 2 >= lastScreenHeight || this->posY <= 0)
+	if (this->posY + (this->radius * 2* this->scale) >= lastScreenHeight || this->posY <= 0)
 	{
 		this->speedY *= -1;
 	}
